@@ -1,0 +1,98 @@
+<html>
+<meta charset="utf-8" contentType="text/json"/>
+<script type="text/javascript">
+    function submit() {
+        var url = document.getElementById("url").value.trim();
+        if (url == null || url == '') {
+            alert("Please enter a valid URL");
+        } else {
+            var newWindow = window.open("", "", "height=800,width=1000").document;
+            var response = loadJson(url);
+            var json = parseJson(response);
+            var table = newWindow.createElement("table");
+            table.setAttribute("border", 1);
+            table.appendChild(headerData(json, newWindow));
+            table.appendChild(tableData(json, newWindow));
+            newWindow.write(table.outerHTML);
+
+        }
+    }
+
+    function loadJson(url) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open('GET', url, false);
+        xmlHttp.overrideMimeType('application/json');
+        xmlHttp.send()
+        if (xmlHttp.status == 200) {
+            return xmlHttp.responseText;
+        } else {
+            //TODO: handle 404 case
+        }
+    }
+
+    function parseJson(jsonObj) {
+        var obj = JSON.parse(jsonObj);
+        return obj;
+    }
+
+    function headerData(jsonObj, window) {
+        var thead = window.createElement("thead");
+        jsonObj.Mainline.Table.Header.Data.forEach(function(element) {
+            var th = window.createElement("th");
+            th.appendChild(window.createTextNode(element));
+            thead.appendChild(th);
+        });
+        return thead;
+
+    }
+
+    function tableData(jsonObj, window) {
+        var tbody = window.createElement("tbody");
+        jsonObj.Mainline.Table.Row.forEach(function(element) {
+            var tr = window.createElement("tr");
+            var keys = Object.keys(element);
+            keys.forEach(function(key) {
+
+                var td = window.createElement("td");
+                if (key == 'Company' || key == 'Ships' || key == 'Market') {
+                    td.appendChild(window.createTextNode(element[key]));
+                } else if (key == 'HomePage') {
+                    var a = window.createElement("a");
+                    a.setAttribute('href', element[key]);
+                    a.innerHTML = element[key];
+                    td.appendChild(a);
+                } else if (key == 'Logo') {
+                    var img = window.createElement("img");
+                    img.setAttribute('src', element[key]);
+                    img.setAttribute('height', '200px');
+                    img.setAttribute('width', '300px');
+                    td.appendChild(img);
+                } else if (key == 'Hubs') {
+                    var hub = element[key].Hub;
+                    var ul = window.createElement("ul");
+                    for (i = 0; i < hub.length; i++) {
+                        var li = window.createElement("li");
+                        li.appendChild(window.createTextNode(hub[i]));
+                        if (i == 0) {
+                            li.setAttribute('style', 'font-weight:bold;');
+                        }
+                        ul.appendChild(li);
+                    }
+                    td.appendChild(ul);
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        return tbody;
+    }
+</script>
+
+<body style="text-align:center;">
+    <h3>Enter URL for Container Shipping Companies List JSON File</h3>
+    <input type="text" id="url" />
+    <br /><br />
+    <button onclick="submit()">Submit Query</button>
+</body>
+
+</html>
