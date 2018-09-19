@@ -4,11 +4,24 @@
     function submit() {
         var url = document.getElementById("url").value.trim();
         if (url == null || url == '') {
-            alert("Please enter a valid URL");
-        } else {
-            var newWindow = window.open("", "", "height=800,width=1000").document;
+            alert("Please enter the name of JSON file");
+        }
+        else {
             var response = loadJson(url);
+            if (response==null) {
+                alert("Enter a valid filename");
+                return;
+            }
             var json = parseJson(response);
+            if (!(json.Mainline.Table.hasOwnProperty("Header"))) {
+                alert("Missing headers for Shipping Companies");
+                return;
+            }
+            else if (!(json.Mainline.Table.hasOwnProperty("Row"))) {
+                alert("Missing data for Shipping Companies");
+                return;
+            }
+            var newWindow = window.open("", "", "height=800,width=1000").document;
             var table = newWindow.createElement("table");
             table.setAttribute("border", 1);
             table.appendChild(headerData(json, newWindow));
@@ -19,15 +32,20 @@
     }
 
     function loadJson(url) {
+        var response;
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open('GET', url, false);
+        xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                response = xmlHttp.responseText;
+            }
+            else {
+                response = null;
+            }
+        };
+        xmlHttp.open("GET", url, false);
         xmlHttp.overrideMimeType('application/json');
-        xmlHttp.send()
-        if (xmlHttp.status == 200) {
-            return xmlHttp.responseText;
-        } else {
-            //TODO: handle 404 case
-        }
+        xmlHttp.send();
+        return response;
     }
 
     function parseJson(jsonObj) {
@@ -52,7 +70,6 @@
             var tr = window.createElement("tr");
             var keys = Object.keys(element);
             keys.forEach(function(key) {
-
                 var td = window.createElement("td");
                 if (key == 'Company' || key == 'Ships' || key == 'Market') {
                     td.appendChild(window.createTextNode(element[key]));
@@ -89,7 +106,7 @@
 </script>
 
 <body style="text-align:center;">
-    <h3>Enter URL for Container Shipping Companies List JSON File</h3>
+    <h3 style="margin-top: 150px;">Enter URL for Container Shipping Companies List JSON File</h3>
     <input type="text" id="url" />
     <br /><br />
     <button onclick="submit()">Submit Query</button>
