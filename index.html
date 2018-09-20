@@ -4,15 +4,19 @@
     function submit() {
         var url = document.getElementById("url").value.trim();
         if (url == null || url == '') {
-            alert("Please enter the name of JSON file");
+            alert("Missing JSON file");
         }
         else {
             var response = loadJson(url);
             if (response==null) {
-                alert("Enter a valid filename");
+                alert("File does not exist. Enter a valid filename");
                 return;
             }
             var json = parseJson(response);
+            if (json=="error") {
+                alert("Invalid JSON file");
+                return;
+            }
             if (!(json.Mainline.Table.hasOwnProperty("Header"))) {
                 alert("Missing headers for Shipping Companies");
                 return;
@@ -22,10 +26,15 @@
                 return;
             }
             var newWindow = window.open("", "", "height=800,width=1000").document;
+            var head = newWindow.createElement("head");
+            var title = newWindow.createElement("title");
+            title.appendChild(newWindow.createTextNode("Top Container Shipping Companies"));
+            head.appendChild(title);
             var table = newWindow.createElement("table");
             table.setAttribute("border", 1);
             table.appendChild(headerData(json, newWindow));
             table.appendChild(tableData(json, newWindow));
+            newWindow.write(head.outerHTML);
             newWindow.write(table.outerHTML);
 
         }
@@ -49,8 +58,16 @@
     }
 
     function parseJson(jsonObj) {
-        var obj = JSON.parse(jsonObj);
-        return obj;
+        try {
+            var obj = JSON.parse(jsonObj);
+            return obj;   
+        }
+        catch(e) {
+            if (e instanceof SyntaxError) {
+                return "error";
+            }
+        }
+        
     }
 
     function headerData(jsonObj, window) {
@@ -79,10 +96,15 @@
                     a.innerHTML = element[key];
                     td.appendChild(a);
                 } else if (key == 'Logo') {
-                    var img = window.createElement("img");
-                    img.setAttribute('src', element[key]);
-                    img.setAttribute('height', '200px');
-                    img.setAttribute('width', '300px');
+                    if (element[key].trim()=="") {
+                        var img = window.createTextNode(element[key]);
+                    }
+                    else {
+                        var img = window.createElement("img");
+                        img.setAttribute('src', element[key]);
+                        img.setAttribute('height', '200px');
+                        img.setAttribute('width', '350px');   
+                    }                    
                     td.appendChild(img);
                 } else if (key == 'Hubs') {
                     var hub = element[key].Hub;
